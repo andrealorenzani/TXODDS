@@ -1,0 +1,8 @@
+This is your new Play application
+=================================
+
+This file will be packaged with your application, when using `activator dist`.
+
+
+sqlite> CREATE TABLE IF NOT EXISTS STREAMS (id integer primary key AUTOINCREMENT, idreader varchar(100), numseq integer);
+sqlite> CREATE TABLE IF NOT EXISTS STOREDVALUES (id integer primary key AUTOINCREMENT, idreader varchar(100), value integer);

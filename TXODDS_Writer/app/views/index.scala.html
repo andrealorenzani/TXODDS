@@ -1,0 +1,27 @@
+@import _root_.name.lorenzani.andrea.txodds.aktors._
+@(status: InternalStatus)
+
+@main("Status of Writer") {
+
+    <div><B>Connection status: </B>@status.status</div>
+    <div><B>N. errors: </B>@status.errors</div>
+    <div><B>Connection estabilished: </B>@status.conStarted</div>
+    <div><B>Last Keep Alive from server: </B>@status.lastKA</div>
+    <div><B>Last @status.lastReq.size requests completed:</B></div>
+    <div class="well">
+        <ul>
+            @for(req <- status.lastReq) {
+            <li>@req.dt [@req.start, @req.end)</li>
+            }
+        </ul>
+    </div>
+    <div><B>Last @status.lastErr.size errors:</B></div>
+    <div class="well">
+        <ul>
+            @for(req <- status.lastErr) {
+            <li>@req</li>
+            }
+        </ul>
+    </div>
+
+}

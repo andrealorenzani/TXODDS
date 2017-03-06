@@ -1,0 +1,35 @@
+Good morning,
+I spent 6 hours to do that and unfortunately it is much less than a complete prototype.
+Unfortunately I had no time to work more on that, and being huge I think it will take me another full day of work for a prototype.
+As you say in the text, even if it is not finished I explain you the idea, the choices and what I wanted to do.
+
+I did the writer and half of the server.
+You asked that each component connects to server (TCP connection), shares its internal state through a simple web page, has a retry mechanism and a keepalive procedure. The server has moreover to persist the state.
+
+I could have done it with several libraries and framework. I choose play because it is integrated with Akka (as I said I didn't work too much with Akka in my carreer), so I had more or less at a cheap price connections, webserver, integration with db and all the things that were needed.
+
+The Writer is divided by the following Actors:
+ -- TcpClient: it connects to the server, it has the retry mecanism. It takes as input a listener (but I wanted to change it to receive the listener through a message, to then test it with mock actors). It is connected to two actors: the listner (type ConnectionsListener) that handles the data and to the KeepAlive that handles the keepalive
+ -- KeepAlive: it interacts with the TcpClient to update the keepalive timeout from the server and to send the keepalive message from client
+ -- WriterStatus: it is a simple Actor that keeps the internal status of the component
+ -- ConnectionsHandler: it is the supervisor of the business part: it logs messages, compute data to send to the server, update the internal status. In the first draft it was doing too much things, everything was passing through that, it still handles the requests for internal status and the update of the status of the TcpClient, I could have improved the IoC to fully separate these tasks
+
+ Please note: I setup a logback appender for a log file to have all the logs streamed to a file. Moreover for test purpose my Actors were started by the Controller of the webpage, I would have moved them to the startup of Play later, after first draft.
+
+ The Server included the play lib for SQLite. I had some problems in making Play see the database, and I didn't solve it yet (I did several projects with SQLite, never had problem before, also because usually JDBC for SQLite creates an empty database if it is not available). I forgot the logback, but it is easily added by copying the one of Writer.
+ For now the Actors are:
+  -- TcpConnection: it looks like TcpClient but without the Bind part. Indeed it is created by a TcpServer
+  -- TcpServer: it is bound to a port and waits for incoming connections. When a connection is estabilished, it spawns a TcpConnection actor to register to it, a KeepAlive Actor associated to the connection and it sends a message to its listener to communicate the connection. It was intended to be used to both Writer connections and Reader connections
+  -- KeepAlive: similar to the one in the Writer
+  -- WriterHandler: I didn't finish to code it. The idea is to receive data from the TcpConnections. It will have stored the data through a DbActor (not yet implemented)
+
+  What I would have to do yet? My idea was to write the following actors:
+  -- DbActor: it takes data from the WriterHandler to store in a db. The idea was to have the DbActor as a channel from the writer to the reader (or better, from their handlers), so the data would have been requested from the ReaderHandler to the DbActor, that checks in the DB and if not available it would have requested to the WriterHandler to ask it to the Wtiter. In this way in case of failure, with the sender requiring again data from a position it would be easy to restart everything
+  -- ReaderHandler: Similar to WriterHandler, it handles the side of the Readers. It has its TcpServer for which it is its listener. It stores the status of the different connections, and handles the information requested by them. It is not yet clear if the different readers at the end can be seen as separate entities, in this case I could have made the ReaderHandler handle a single Reader and I would have needed a supervisor (a ConnectionsHandler) to handle that the number of the connections were less or equal to 1000.
+
+  I didn't study very well the Reader yet. I think it would have been something similar to the Writer. The idea is that play should be able anyway to handle the high number of connections in a proper way. Anyway I was using its internal threadpool for futures (like for ask pattern).
+  Sorry but this project was really huge.
+  At least it gave me the possibility to work again with Play and Akka.
+  Please get back to me with a feedback. I look forward to it.
+  Regards,
+  -- Andrea
